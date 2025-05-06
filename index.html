@@ -364,35 +364,26 @@
         }
       }
 
-      .plot-container {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 6px;
+      #redirectPlotBtn {
+        background: #16f381;
+        color: #0d0d0d;
       }
-
-      .plot-container input {
-        width: 70px;
-        padding: 4px;
-      }
-      .plot-container button {
-        padding: 6px 12px;
+      #redirectPlotBtn:hover {
+        box-shadow: 0 0 10px #16f381, 0 0 20px #16f38133;
+        transform: translateY(-1px);
       }
     </style>
   </head>
 
   <body>
     <div class="container">
-      <!-- controls -->
       <div class="controls">
-        <button id="startStopBtn">START</button>
+        <button id="startStopBtn">START CAMERA</button>
         <button id="processBtn" style="display: none">CAPTURE</button>
 
-        <div class="plot-container">
-          <button onclick="location.href='plot.html'" id="redirectPlotBtn">
-            Plot
-          </button>
-        </div>
+        <button id="redirectPlotBtn" onclick="location.href='plot.html'">
+          Plot Spectra
+        </button>
       </div>
 
       <!-- live video + coords -->
@@ -668,36 +659,6 @@
           URL.revokeObjectURL(url);
         }
       };
-      const plotBtn = document.getElementById("plotBtn");
-      const plotFiles = document.getElementById("plotFiles");
-      const plotImg = document.getElementById("plotImg");
-      plotBtn.addEventListener("click", async () => {
-        if (!plotFiles.files.length) {
-          return alert("Please select at least one .txt file.");
-        }
-        const xmin = document.getElementById("xminInput").value;
-        const xmax = document.getElementById("xmaxInput").value;
-
-        const form = new FormData();
-        for (const f of plotFiles.files) form.append("files", f);
-        form.append("xmin", xmin);
-        form.append("xmax", xmax);
-
-        try {
-          const res = await fetch(piURL + "/plot", {
-            method: "POST",
-            body: form,
-          });
-          const j = await res.json();
-          if (!res.ok) {
-            return alert("Plot error: " + (j.message || res.status));
-          }
-          plotImg.src = "data:image/png;base64," + j.plot;
-          plotImg.style.display = "block";
-        } catch (e) {
-          alert("Cannot reach plotting endpoint.");
-        }
-      });
     </script>
   </body>
 </html>

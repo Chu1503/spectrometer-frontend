@@ -387,28 +387,18 @@
       <div class="controls">
         <button id="startStopBtn">START</button>
         <button id="processBtn" style="display: none">CAPTURE</button>
-        <div class="controls">
-          <button id="startStopBtn">START</button>
-          <button id="processBtn" style="display: none">CAPTURE</button>
 
-          <!-- Plot UI now lives here, flush with START -->
-          <div class="plot-container">
-            <input id="plotFiles" type="file" accept=".txt" multiple />
-            <input
-              id="xminInput"
-              type="number"
-              placeholder="xmin"
-              value="400"
-            />
-            <input
-              id="xmaxInput"
-              type="number"
-              placeholder="xmax"
-              value="625"
-            />
-            <button id="plotBtn">Plot Spectra</button>
-          </div>
+        <!-- Plot UI now lives here, flush with START -->
+        <div class="plot-container">
+          <input id="plotFiles" type="file" accept=".txt" multiple />
+          <input id="xminInput" type="number" placeholder="xmin" value="400" />
+          <input id="xmaxInput" type="number" placeholder="xmax" value="625" />
+          <button id="plotBtn">Plot Spectra</button>
         </div>
+        <img
+          id="plotImg"
+          style="display: none; margin-top: 20px; max-width: 100%"
+        />
       </div>
 
       <!-- live video + coords -->

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Plot Spectra</title>
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        background-color: #212121;
+        font-family: "Inter", sans-serif;
+        color: #ededed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .plot-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        background-color: #2a2a2a;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #16f38155;
+      }
+
+      input[type="number"],
+      input[type="file"] {
+        background: #171717;
+        border: 1px solid #16f381;
+        border-radius: 4px;
+        color: #ededed;
+        padding: 10px;
+        font-size: 18px;
+      }
+
+      button {
+        font-size: 18px;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: 2px solid #000;
+        background: #16f381;
+        color: #0d0d0d;
+        cursor: pointer;
+      }
+
+      button:hover {
+        box-shadow: 0 0 10px #16f381, 0 0 20px #16f38133;
+        transform: translateY(-1px);
+      }
+
+      #plotImg {
+        max-width: 100%;
+        margin-top: 20px;
+        border: 1px solid #444;
+        box-shadow: 0 0 10px #16f38133;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="plot-container">
+      <input id="plotFiles" type="file" accept=".txt" multiple />
+      <input id="xminInput" type="number" placeholder="xmin" value="400" />
+      <input id="xmaxInput" type="number" placeholder="xmax" value="625" />
+      <button id="plotBtn">Plot Spectra</button>
+      <img id="plotImg" style="display: none" />
+    </div>
+
+    <script>
+      const piURL = location.origin.replace(":8000", ":5001");
+
+      const plotBtn = document.getElementById("plotBtn");
+      const plotFiles = document.getElementById("plotFiles");
+      const plotImg = document.getElementById("plotImg");
+
+      plotBtn.addEventListener("click", async () => {
+        if (!plotFiles.files.length) {
+          return alert("Please select at least one .txt file.");
+        }
+        const xmin = document.getElementById("xminInput").value;
+        const xmax = document.getElementById("xmaxInput").value;
+
+        const form = new FormData();
+        for (const f of plotFiles.files) form.append("files", f);
+        form.append("xmin", xmin);
+        form.append("xmax", xmax);
+
+        try {
+          const res = await fetch(piURL + "/plot", {
+            method: "POST",
+            body: form,
+          });
+          const j = await res.json();
+          if (!res.ok) {
+            return alert("Plot error: " + (j.message || res.status));
+          }
+          plotImg.src = "data:image/png;base64," + j.plot;
+          plotImg.style.display = "block";
+        } catch (e) {
+          alert("Cannot reach plotting endpoint.");
+        }
+      });
+    </script>
+  </body>
+</html>

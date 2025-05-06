@@ -2,17 +2,20 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Plot Spectra</title>
+    <title>Spectrometer</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+      /* full-page flex centering */
       body {
         margin: 0;
         height: 100vh;
-        background-color: #212121;
-        font-family: "Inter", sans-serif;
-        color: #ededed;
         display: flex;
         align-items: center;
         justify-content: center;
+        background-color: #212121;
+        font-family: "Inter", sans-serif;
+        color: #ededed;
       }
 
       .plot-container {
@@ -20,20 +23,28 @@
         flex-direction: column;
         align-items: center;
         gap: 16px;
-        background-color: #2a2a2a;
         padding: 40px;
         border-radius: 10px;
-        box-shadow: 0 0 10px #16f38155;
       }
 
       input[type="number"],
       input[type="file"] {
         background: #171717;
-        border: 1px solid #16f381;
+        border: 1px solid black;
         border-radius: 4px;
         color: #ededed;
         padding: 10px;
         font-size: 18px;
+      }
+
+      .inputs{
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+      }
+
+      input[type="number"]{
+        width: 75px;
       }
 
       button {
@@ -63,9 +74,15 @@
   <body>
     <div class="plot-container">
       <input id="plotFiles" type="file" accept=".txt" multiple />
-      <input id="xminInput" type="number" placeholder="xmin" value="400" />
-      <input id="xmaxInput" type="number" placeholder="xmax" value="625" />
-      <button id="plotBtn">Plot Spectra</button>
+      <div class="inputs">
+      <div>
+        <label>X MIN: <input id="xminInput" type="number" placeholder="xmin" value="400" /></label>
+      </div>
+      <div>
+        <label>X MIN: <input id="xmaxInput" type="number" placeholder="xmax" value="625" /></label>
+      </div> 
+    </div>     
+      <button id="plotBtn">PLOT</button>
       <img id="plotImg" style="display: none" />
     </div>
 

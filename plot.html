@@ -76,18 +76,14 @@
       <input id="plotFiles" type="file" accept=".txt" multiple />
       <div id="fileLabelInputs"></div>
       <div class="inputs">
-        <div>
-          <label>
-            X MIN:
-            <input id="xminInput" type="number" value="400" />
-          </label>
-        </div>
-        <div>
-          <label>
-            X MAX:
-            <input id="xmaxInput" type="number" value="625" />
-          </label>
-        </div>
+        <label>
+          X MIN:
+          <input id="xminInput" type="number" value="400" />
+        </label>
+        <label style="margin-left: 24px">
+          X MAX:
+          <input id="xmaxInput" type="number" value="625" />
+        </label>
       </div>
       <button id="plotBtn">PLOT</button>
       <img
@@ -106,16 +102,18 @@
       const plotFiles = document.getElementById("plotFiles");
       const plotBtn = document.getElementById("plotBtn");
       const plotImg = document.getElementById("plotImg");
+      const labelDiv = document.getElementById("fileLabelInputs");
+      const inputsDiv = document.querySelector(".inputs");
+      let plotted = false;
 
-      // 1) When files are chosen, create one <strong>filename</strong> + <input name="labels" required> per file
+      // build one label-input per file
       plotFiles.addEventListener("change", () => {
-        const container = document.getElementById("fileLabelInputs");
-        container.innerHTML = "";
+        labelDiv.innerHTML = "";
         Array.from(plotFiles.files).forEach((file) => {
-          const div = document.createElement("div");
-          div.style.marginTop = "10px";
-          div.innerHTML = `
-            <strong style="display:inline-block; width:200px; overflow:hidden; text-overflow:ellipsis;">
+          const row = document.createElement("div");
+          row.style.marginTop = "8px";
+          row.innerHTML = `
+            <strong style="display:inline-block;width:200px;overflow:hidden;text-overflow:ellipsis;">
               ${file.name}
             </strong>
             <input
@@ -123,53 +121,64 @@
               name="labels"
               placeholder="Enter label"
               required
-              style="width:200px; padding:6px; margin-left:10px;"
+              style="width:200px;padding:6px;margin-left:10px;"
             />
           `;
-          container.appendChild(div);
+          labelDiv.appendChild(row);
         });
       });
 
-      // 2) Single handler for PLOT
       plotBtn.addEventListener("click", async () => {
-        if (!plotFiles.files.length) {
-          return alert("Please select at least one .txt file.");
-        }
-        const xmin = document.getElementById("xminInput").value;
-        const xmax = document.getElementById("xmaxInput").value;
-        const form = new FormData();
+        if (!plotted) {
+          if (!plotFiles.files.length) {
+            return alert("Select at least one .txt file.");
+          }
+          // gather form
+          const xmin = document.getElementById("xminInput").value;
+          const xmax = document.getElementById("xmaxInput").value;
+          const form = new FormData();
+          Array.from(plotFiles.files).forEach((f) => form.append("files", f));
+          document
+            .getElementsByName("labels")
+            .forEach((inp) => form.append("labels", inp.value));
+          form.append("xmin", xmin);
+          form.append("xmax", xmax);
 
-        // attach files
-        Array.from(plotFiles.files).forEach((f) => form.append("files", f));
-        // attach labels in the same order
-        document
-          .getElementsByName("labels")
-          .forEach((inp) => form.append("labels", inp.value));
-        form.append("xmin", xmin);
-        form.append("xmax", xmax);
+          try {
+            const res = await fetch(piURL + "/plot", {
+              method: "POST",
+              body: form,
+            });
+            const j = await res.json();
+            if (!res.ok) throw new Error(j.message || res.status);
 
-        try {
-          const res = await fetch(piURL + "/plot", {
-            method: "POST",
-            body: form,
-          });
-          const j = await res.json();
-          if (!res.ok) throw new Error(j.message || res.status);
+            // show the returned plot
+            plotImg.src = "data:image/png;base64," + j.plot;
+            plotImg.style.display = "block";
 
-          // display plot
-          plotImg.src = "data:image/png;base64," + j.plot;
-          plotImg.style.display = "block";
+            // show intensities
+            document.getElementById("intensitiesText")?.remove();
+            const p = document.createElement("p");
+            p.id = "intensitiesText";
+            p.style =
+              "margin-top:12px; color:#16f381; font-weight:bold; text-align:center;";
+            p.textContent = "Peak Intensities: " + j.intensities.join(", ");
+            document.querySelector(".plot-container").appendChild(p);
 
-          // display I values
-          document.getElementById("intensitiesText")?.remove();
-          const p = document.createElement("p");
-          p.id = "intensitiesText";
-          p.style =
-            "margin-top:12px; color:#16f381; font-weight:bold; text-align:center;";
-          p.textContent = "I: " + j.intensities.join(", ");
-          document.querySelector(".plot-container").appendChild(p);
-        } catch (e) {
-          alert("Plot error: " + e.message);
+            // hide all inputs now that plot is up
+            plotFiles.style.display = "none";
+            labelDiv.style.display = "none";
+            inputsDiv.style.display = "none";
+
+            // flip state & repurpose button to reset
+            plotted = true;
+            plotBtn.textContent = "RESET";
+          } catch (e) {
+            alert("Plot error: " + e.message);
+          }
+        } else {
+          // second click -> reload page
+          location.reload();
         }
       });
     </script>

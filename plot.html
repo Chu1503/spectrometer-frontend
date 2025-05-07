@@ -77,83 +77,74 @@
       <div id="fileLabelInputs"></div>
       <div class="inputs">
         <div>
-          <label
-            >X MIN:
-            <input id="xminInput" type="number" placeholder="xmin" value="400"
-          /></label>
+          <label>
+            X MIN:
+            <input id="xminInput" type="number" value="400" />
+          </label>
         </div>
         <div>
-          <label
-            >X MAX:
-            <input id="xmaxInput" type="number" placeholder="xmax" value="625"
-          /></label>
+          <label>
+            X MAX:
+            <input id="xmaxInput" type="number" value="625" />
+          </label>
         </div>
       </div>
       <button id="plotBtn">PLOT</button>
-      <img id="plotImg" style="display: none" />
+      <img
+        id="plotImg"
+        style="
+          display: none;
+          margin: 20px auto 0;
+          max-width: 100%;
+          border: 1px solid #444;
+        "
+      />
     </div>
 
     <script>
       const piURL = location.origin.replace(":8000", ":5001");
-
-      const plotBtn = document.getElementById("plotBtn");
       const plotFiles = document.getElementById("plotFiles");
+      const plotBtn = document.getElementById("plotBtn");
       const plotImg = document.getElementById("plotImg");
 
+      // 1) When files are chosen, create one <strong>filename</strong> + <input name="labels" required> per file
+      plotFiles.addEventListener("change", () => {
+        const container = document.getElementById("fileLabelInputs");
+        container.innerHTML = "";
+        Array.from(plotFiles.files).forEach((file) => {
+          const div = document.createElement("div");
+          div.style.marginTop = "10px";
+          div.innerHTML = `
+            <strong style="display:inline-block; width:200px; overflow:hidden; text-overflow:ellipsis;">
+              ${file.name}
+            </strong>
+            <input
+              type="text"
+              name="labels"
+              placeholder="Enter label"
+              required
+              style="width:200px; padding:6px; margin-left:10px;"
+            />
+          `;
+          container.appendChild(div);
+        });
+      });
+
+      // 2) Single handler for PLOT
       plotBtn.addEventListener("click", async () => {
         if (!plotFiles.files.length) {
           return alert("Please select at least one .txt file.");
         }
         const xmin = document.getElementById("xminInput").value;
         const xmax = document.getElementById("xmaxInput").value;
-
         const form = new FormData();
-        for (const f of plotFiles.files) form.append("files", f);
-        form.append("xmin", xmin);
-        form.append("xmax", xmax);
 
-        try {
-          const res = await fetch(piURL + "/plot", {
-            method: "POST",
-            body: form,
-          });
-          const j = await res.json();
-          if (!res.ok) {
-            return alert("Plot error: " + (j.message || res.status));
-          }
-          plotImg.src = "data:image/png;base64," + j.plot;
-          plotImg.style.display = "block";
-        } catch (e) {
-          alert("Cannot reach plotting endpoint.");
-        }
-      });
-
-      plotFiles.addEventListener("change", () => {
-        const container = document.getElementById("fileLabelInputs");
-        container.innerHTML = "";
-        Array.from(plotFiles.files).forEach((file, i) => {
-          const label = document.createElement("div");
-          label.style.marginTop = "10px";
-          label.innerHTML = `
-        <strong>${file.name}</strong>
-        <input type="text" name="label" placeholder="Enter label for ${file.name}" style="margin-left:10px; padding: 6px;" />
-      `;
-          container.appendChild(label);
-        });
-      });
-
-      plotBtn.addEventListener("click", async () => {
-        if (!plotFiles.files.length)
-          return alert("Please select at least one .txt file.");
-
-        const xmin = document.getElementById("xminInput").value;
-        const xmax = document.getElementById("xmaxInput").value;
-
-        const form = new FormData();
-        for (const f of plotFiles.files) form.append("files", f);
+        // attach files
+        Array.from(plotFiles.files).forEach((f) => form.append("files", f));
+        // attach labels in the same order
         document
-          .getElementsByName("label")
-          .forEach((inp) => form.append("labels", inp.value || "Unnamed"));
+          .getElementsByName("labels")
+          .forEach((inp) => form.append("labels", inp.value));
         form.append("xmin", xmin);
         form.append("xmax", xmax);
 
@@ -163,23 +154,22 @@
             body: form,
           });
           const j = await res.json();
-          if (!res.ok) return alert("Plot error: " + (j.message || res.status));
+          if (!res.ok) throw new Error(j.message || res.status);
+
+          // display plot
           plotImg.src = "data:image/png;base64," + j.plot;
           plotImg.style.display = "block";
-          let iText = "Max Intensities (I): " + j.intensities.join(", ");
-          if (!document.getElementById("intensitiesText")) {
-            const para = document.createElement("p");
-            para.id = "intensitiesText";
-            para.style.marginTop = "20px";
-            para.style.fontWeight = "bold";
-            para.style.color = "#16f381";
-            para.textContent = iText;
-            document.querySelector(".plot-container").appendChild(para);
-          } else {
-            document.getElementById("intensitiesText").textContent = iText;
-          }
+
+          // display I values
+          document.getElementById("intensitiesText")?.remove();
+          const p = document.createElement("p");
+          p.id = "intensitiesText";
+          p.style =
+            "margin-top:12px; color:#16f381; font-weight:bold; text-align:center;";
+          p.textContent = "I: " + j.intensities.join(", ");
+          document.querySelector(".plot-container").appendChild(p);
         } catch (e) {
-          alert("Cannot reach plotting endpoint.");
+          alert("Plot error: " + e.message);
         }
       });
     </script>

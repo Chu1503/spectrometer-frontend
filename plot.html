@@ -150,7 +150,7 @@
         id="labelsText"
         style="
           display: none;
-          color: #16f381;
+          color: white;
           font-weight: bold;
           text-align: center;
         "
@@ -158,19 +158,28 @@
 
       <!-- COMPUTE SECTION -->
       <div id="computeSection">
-        <h3>Compute Transmission & Absorbance</h3>
+        <h3
+          style="
+            display: none;
+            color: #16f381;
+            font-weight: bold;
+            text-align: center;
+          "
+        >
+          Transmission & Absorbance Plots
+        </h3>
         <div>
           <!-- I column -->
           <div>
-            <label>I:</label>
+            <label>Intensities:</label>
             <div id="iInputs"></div>
             <button id="addI" style="margin-top: 6px; padding: 4px 8px">
-              + Add I
+              +
             </button>
           </div>
           <!-- I₀ blank -->
           <div>
-            <label>I₀ (Blank):</label>
+            <label>I₀ (Blank Intensity):</label>
             <input
               id="i0Input"
               class="plot-input"
@@ -180,8 +189,11 @@
             />
           </div>
         </div>
-        <button id="computeBtn">GO</button>
+        <button id="computeBtn">PLOT</button>
         <div id="resultPlots"></div>
+        <h3>Formulae Used:</h3>
+        <h4>Transmission = I/I₀</h4>
+        <h4>Absorbance = -log<sub>10</sub>(T)</h4>
       </div>
     </div>
 
@@ -288,9 +300,6 @@
 
       // COMPUTE → Transmission & Absorbance
       computeBtn.addEventListener("click", async () => {
-        if (computed) {
-          return location.reload();
-        }
         // gather I, labels, I0
         const iVals = Array.from(document.getElementsByClassName("iValue")).map(
           (i) => parseFloat(i.value)
@@ -314,13 +323,12 @@
 
           // render result plots
           resultPlots.innerHTML = `
-          <img src="data:image/png;base64,${j.transmission}" />
-          <img src="data:image/png;base64,${j.absorbance}" />
-        `;
+        <img src="data:image/png;base64,${j.transmission}" />
+        <img src="data:image/png;base64,${j.absorbance}" />
+      `;
 
-          // toggle to reset
-          computeBtn.textContent = "RESET";
-          computed = true;
+          // hide GO button now that plots are up
+          computeBtn.style.display = "none";
         } catch (e) {
           alert("Compute error: " + e.message);
         }

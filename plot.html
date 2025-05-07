@@ -166,6 +166,18 @@
           if (!res.ok) return alert("Plot error: " + (j.message || res.status));
           plotImg.src = "data:image/png;base64," + j.plot;
           plotImg.style.display = "block";
+          let iText = "Max Intensities (I): " + j.intensities.join(", ");
+          if (!document.getElementById("intensitiesText")) {
+            const para = document.createElement("p");
+            para.id = "intensitiesText";
+            para.style.marginTop = "20px";
+            para.style.fontWeight = "bold";
+            para.style.color = "#16f381";
+            para.textContent = iText;
+            document.querySelector(".plot-container").appendChild(para);
+          } else {
+            document.getElementById("intensitiesText").textContent = iText;
+          }
         } catch (e) {
           alert("Cannot reach plotting endpoint.");
         }

@@ -106,7 +106,7 @@
       const inputsDiv = document.querySelector(".inputs");
       let plotted = false;
 
-      // build one label-input per file
+      // Build one label-input per file
       plotFiles.addEventListener("change", () => {
         labelDiv.innerHTML = "";
         Array.from(plotFiles.files).forEach((file) => {
@@ -131,16 +131,21 @@
       plotBtn.addEventListener("click", async () => {
         if (!plotted) {
           if (!plotFiles.files.length) {
-            return alert("Select at least one .txt file.");
+            return alert("Please select at least one .txt file.");
           }
-          // gather form
+
+          // collect form data
           const xmin = document.getElementById("xminInput").value;
           const xmax = document.getElementById("xmaxInput").value;
           const form = new FormData();
           Array.from(plotFiles.files).forEach((f) => form.append("files", f));
-          document
-            .getElementsByName("labels")
-            .forEach((inp) => form.append("labels", inp.value));
+
+          // grab the user-entered labels in order
+          const labelsArray = Array.from(
+            document.getElementsByName("labels")
+          ).map((inp) => inp.value);
+          labelsArray.forEach((l) => form.append("labels", l));
+
           form.append("xmin", xmin);
           form.append("xmax", xmax);
 
@@ -152,32 +157,41 @@
             const j = await res.json();
             if (!res.ok) throw new Error(j.message || res.status);
 
-            // show the returned plot
+            // show the plot
             plotImg.src = "data:image/png;base64," + j.plot;
             plotImg.style.display = "block";
 
-            // show intensities
+            // show Peak Intensities
             document.getElementById("intensitiesText")?.remove();
-            const p = document.createElement("p");
-            p.id = "intensitiesText";
-            p.style =
+            const p1 = document.createElement("p");
+            p1.id = "intensitiesText";
+            p1.style =
               "margin-top:12px; color:#16f381; font-weight:bold; text-align:center;";
-            p.textContent = "Peak Intensities: " + j.intensities.join(", ");
-            document.querySelector(".plot-container").appendChild(p);
+            p1.textContent = "Peak Intensities: " + j.intensities.join(", ");
+            document.querySelector(".plot-container").appendChild(p1);
 
-            // hide all inputs now that plot is up
+            // show corresponding Labels
+            document.getElementById("labelsText")?.remove();
+            const p2 = document.createElement("p");
+            p2.id = "labelsText";
+            p2.style =
+              "margin-top:6px; color:#16f381; font-weight:bold; text-align:center;";
+            p2.textContent = "Labels: " + labelsArray.join(", ");
+            document.querySelector(".plot-container").appendChild(p2);
+
+            // hide all inputs now that we've plotted
             plotFiles.style.display = "none";
             labelDiv.style.display = "none";
             inputsDiv.style.display = "none";
 
-            // flip state & repurpose button to reset
+            // flip to reset mode
             plotted = true;
             plotBtn.textContent = "RESET";
           } catch (e) {
             alert("Plot error: " + e.message);
           }
         } else {
-          // second click -> reload page
+          // Second click = reload
           location.reload();
         }
       });

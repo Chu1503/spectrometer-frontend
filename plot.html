@@ -95,6 +95,43 @@
           border: 1px solid #444;
         "
       />
+      <div
+        id="computeSection"
+        style="display: none; margin-top: 20px; text-align: center"
+      >
+        <h3 style="color: #ededed">Compute Transmission & Absorbance</h3>
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 10px;
+            color: #ededed;
+          "
+        >
+          <!-- I inputs -->
+          <div id="iSection">
+            <label style="font-weight: bold">I:</label>
+            <div id="iInputs"></div>
+            <button id="addI" style="margin-top: 8px; padding: 4px 8px">
+              + Add I
+            </button>
+          </div>
+          <!-- I0 blank -->
+          <div id="i0Section">
+            <label style="font-weight: bold">I₀ (Blank):</label><br />
+            <input
+              id="i0Input"
+              type="number"
+              step="any"
+              placeholder="Enter I₀"
+              style="width: 100px; padding: 6px; margin-top: 4px"
+            />
+          </div>
+        </div>
+        <button id="computeBtn" style="padding: 8px 16px">GO</button>
+        <div id="resultPlots" style="margin-top: 20px"></div>
+      </div>
     </div>
 
     <script>
@@ -195,6 +232,75 @@
           location.reload();
         }
       });
+      document.getElementById("computeSection").style.display = "block";
+      const iInputs = document.getElementById("iInputs");
+      const addI = document.getElementById("addI");
+
+      function addIRow() {
+        const row = document.createElement("div");
+        row.className = "iRow";
+        row.style.marginTop = "4px";
+        row.innerHTML = `
+      <input
+        type="number"
+        class="iValue"
+        step="any"
+        placeholder="I value"
+        style="width:100px; padding:4px;"
+      />
+      <input
+        type="text"
+        class="xLabel"
+        placeholder="Label"
+        style="width:100px; padding:4px; margin-left:6px;"
+      />
+    `;
+        iInputs.appendChild(row);
+      }
+      // first row
+      addIRow();
+      addI.addEventListener("click", addIRow);
+
+      // GO button handler
+      document
+        .getElementById("computeBtn")
+        .addEventListener("click", async () => {
+          const iVals = Array.from(
+            document.getElementsByClassName("iValue")
+          ).map((i) => parseFloat(i.value));
+          const xLabs = Array.from(
+            document.getElementsByClassName("xLabel")
+          ).map((i) => i.value);
+          const i0 = parseFloat(document.getElementById("i0Input").value);
+          if (iVals.some(isNaN) || !xLabs.every((l) => l) || isNaN(i0)) {
+            return alert("Fill all I values, their labels, and I₀.");
+          }
+
+          try {
+            const res = await fetch(piURL + "/compute", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                i_values: iVals,
+                x_labels: xLabs,
+                i0: i0,
+              }),
+            });
+            const j = await res.json();
+            if (!res.ok) throw new Error(j.message || res.status);
+
+            // render the two new plots
+            const rp = document.getElementById("resultPlots");
+            rp.innerHTML = `
+        <img src="data:image/png;base64,${j.transmission}"
+             style="max-width:100%; margin-top:12px; border:1px solid #444;" />
+        <img src="data:image/png;base64,${j.absorbance}"
+             style="max-width:100%; margin-top:12px; border:1px solid #444;" />
+      `;
+          } catch (e) {
+            alert("Compute error: " + e.message);
+          }
+        });
     </script>
   </body>
 </html>
